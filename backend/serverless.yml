@@ -1,0 +1,163 @@
+service: fondos-api
+frameworkVersion: '3'
+
+provider:
+  name: aws
+  runtime: nodejs18.x
+  region: us-east-1
+  environment:
+    USERS_TABLE: UsersTable
+    FUNDS_TABLE: FundsTable
+    SUBSCRIPTIONS_TABLE: SubscriptionsTable
+    TRANSACTIONS_TABLE: TransactionsTable
+  iam:
+    role:
+      statements:
+        - Effect: Allow
+          Action:
+            - dynamodb:PutItem
+            - dynamodb:GetItem
+            - dynamodb:Query
+            - dynamodb:UpdateItem
+            - dynamodb:DeleteItem
+            - dynamodb:Scan
+          Resource:
+            - arn:aws:dynamodb:us-east-1:*:table/UsersTable
+            - arn:aws:dynamodb:us-east-1:*:table/FundsTable
+            - arn:aws:dynamodb:us-east-1:*:table/SubscriptionsTable
+            - arn:aws:dynamodb:us-east-1:*:table/TransactionsTable
+
+functions:
+  login:
+    handler: handler.login
+    events:
+      - http:
+          path: login
+          method: post
+          cors: true
+
+  changePassword:
+    handler: handler.changePassword
+    events:
+      - http:
+          path: change-password
+          method: post
+          cors: true
+
+  getUsers:
+    handler: handler.getUsers
+    events:
+      - http:
+          path: users
+          method: get
+          cors: true
+
+  getPortfolios:
+    handler: handler.getPortfolios
+    events:
+      - http:
+          path: portfolios
+          method: get
+          cors: true
+
+  getSubscriptionsByUser:
+    handler: handler.getSubscriptionsByUser
+    events:
+      - http:
+          path: subscriptions/user/{userId}
+          method: get
+          cors: true
+
+  subscribe:
+    handler: handler.subscribe
+    events:
+      - http:
+          path: subscriptions
+          method: post
+          cors: true
+
+  unsubscribe:
+    handler: handler.unsubscribe
+    events:
+      - http:
+          path: subscriptions/{id}
+          method: delete
+          cors: true
+
+  getTransactions:
+    handler: handler.getTransactions
+    events:
+      - http:
+          path: transactions
+          method: get
+          cors: true
+
+  getTransactionsByUser:
+    handler: handler.getTransactionsByUser
+    events:
+      - http:
+          path: transactions/user/{userId}
+          method: get
+          cors: true
+
+  notify:
+    handler: handler.notify
+    events:
+      - http:
+          path: notify
+          method: post
+          cors: true
+
+resources:
+  Resources:
+    UsersTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: UsersTable
+        AttributeDefinitions:
+          - AttributeName: email
+            AttributeType: S
+        KeySchema:
+          - AttributeName: email
+            KeyType: HASH
+        BillingMode: PAY_PER_REQUEST
+
+    FundsTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: FundsTable
+        AttributeDefinitions:
+          - AttributeName: id
+            AttributeType: S
+        KeySchema:
+          - AttributeName: id
+            KeyType: HASH
+        BillingMode: PAY_PER_REQUEST
+
+    SubscriptionsTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: SubscriptionsTable
+        AttributeDefinitions:
+          - AttributeName: userId
+            AttributeType: S
+          - AttributeName: fundId
+            AttributeType: S
+        KeySchema:
+          - AttributeName: userId
+            KeyType: HASH
+          - AttributeName: fundId
+            KeyType: RANGE
+        BillingMode: PAY_PER_REQUEST
+
+    TransactionsTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: TransactionsTable
+        AttributeDefinitions:
+          - AttributeName: id
+            AttributeType: S
+        KeySchema:
+          - AttributeName: id
+            KeyType: HASH
+        BillingMode: PAY_PER_REQUEST
